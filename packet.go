@@ -138,7 +138,6 @@ func (pkt *Packet) Drop() error {
 	return pkt.setVerdict(DROP)
 }
 
-//HUGE warning, if the iptables rules aren't set correctly this can cause some problems.
-// func (pkt *Packet) Repeat() error {
-// 	return this.SetVerdict(REPEAT)
-// }
+func (pkt *Packet) Repeat() error {
+ 	return this.SetVerdict(REPEAT)
+}
