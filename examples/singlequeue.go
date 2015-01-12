@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"runtime"
 
-	"github.com/OneOfOne/go-nfqueue"
+	"github.com/elico/go-nfqueue"
 )
 
 func print_packets(qid uint16, pkt *nfqueue.Packet) {
