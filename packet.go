@@ -83,6 +83,8 @@ func (v Verdict) String() string {
 		return "DROP"
 	case ACCEPT:
 		return "ACCEPT"
+	case REPEAT:
+		return "REPEAT"
 	}
 	return fmt.Sprintf("<unsupported verdict, %d>", uint8(v))
 }
