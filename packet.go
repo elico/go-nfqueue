@@ -153,10 +153,10 @@ func (pkt *Packet) Drop() error {
 }
 
 func (pkt *Packet) Repeat() error {
- 	return this.SetVerdict(REPEAT)
+ 	return pkt.SetVerdict(REPEAT)
 }
 
 // Was not tested yet
 func (pkt *Packet) RepeatMark(mark uint32) error {
- 	return this.SetVerdictMark(REPEAT, mark)
+ 	return pkt.SetVerdictMark(REPEAT, mark)
 }
