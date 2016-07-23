@@ -9,7 +9,7 @@ import "C"
 
 import (
 	"net"
-	"os/user"
+	"os"
 	"runtime"
 	"sync"
 	"syscall"
@@ -22,15 +22,19 @@ type nfQueue struct {
 	Timeout        time.Duration
 	qid            uint16
 	h              *C.struct_nfq_handle
-	qh             *C.struct_q_handle
-	fd             int
-	lk             sync.Mutex
+	//qh             *C.struct_q_handle
+	qh *C.struct_nfq_q_handle
+	fd int
+	lk sync.Mutex
 
 	pktch chan *Packet
 }
 
 func NewNFQueue(qid uint16) (nfq *nfQueue) {
-	if u, _ := user.Current(); u.Uid != "0" {
+	if os.Geteuid() != 0 {
+
+	}
+	if os.Geteuid() != 0 {
 		panic("Must be ran by root.")
 	}
 	nfq = &nfQueue{DefaultVerdict: ACCEPT, Timeout: time.Microsecond * 5, qid: qid}
@@ -129,13 +133,14 @@ func (this *nfQueue) Valid() bool {
 //export go_nfq_callback
 func go_nfq_callback(id uint32, hwproto uint16, hook uint8, mark *uint32,
 	version, protocol, tos, ttl uint8, saddr, daddr unsafe.Pointer,
-	sport, dport, checksum uint16, payload, nfqptr unsafe.Pointer) (v uint32) {
+	sport, dport, checksum uint16, payload_len uint32, payload, nfqptr unsafe.Pointer) (v uint32) {
 
 	var (
 		nfq   = (*nfQueue)(nfqptr)
 		ipver = IPVersion(version)
 		ipsz  = C.int(ipver.Size())
 	)
+	bs := C.GoBytes(payload, (C.int)(payload_len))
 
 	verdict := make(chan uint32, 1)
 	pkt := Packet{
@@ -144,6 +149,7 @@ func go_nfq_callback(id uint32, hwproto uint16, hook uint8, mark *uint32,
 		HWProtocol: hwproto,
 		Hook:       hook,
 		Mark:       *mark,
+		Payload:    bs,
 		IPHeader: &IPHeader{
 			Version:  ipver,
 			Protocol: IPProtocol(protocol),

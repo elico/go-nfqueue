@@ -19,22 +19,46 @@ int nfqueue_cb_new(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_d
 
 	int len = nfq_get_payload(nfa, &payload);
 
-	if(len <= 0 || len <=  sizeof(struct iphdr)) {
+	if(len <  sizeof(struct iphdr)) {
 		return 0;
 	}
 
 	struct iphdr * ip = (struct iphdr *) payload;
+
 	if(ip->version == 4) {
+        uint32_t ipsz = (ip->ihl << 2);
+        if(len < ipsz) {
+            return 0;
+        }
+        len -= ipsz;
+        payload += ipsz;
+
 		saddr = (unsigned char *)&ip->saddr;
 		daddr = (unsigned char *)&ip->daddr;
 
 		if(ip->protocol == IPPROTO_TCP) {
-			struct tcphdr *tcp = ((struct tcphdr *) (payload + (ip->ihl << 2)));
+		    if(len < sizeof(struct tcphdr)) {
+		        return 0;
+		    }
+			struct tcphdr *tcp = (struct tcphdr *) payload;
+			uint32_t tcpsz = (tcp->doff << 2);
+			if(len < tcpsz) {
+			    return 0;
+			}
+			len -= tcpsz;
+			payload += tcpsz;
+
 			sport = ntohs(tcp->source);
 			dport = ntohs(tcp->dest);
 			checksum = ntohs(tcp->check);
 		} else if(ip->protocol == IPPROTO_UDP) {
-			struct udphdr *u = ((struct udphdr *) (payload + (ip->ihl << 2)));
+		    if(len < sizeof(struct udphdr)) {
+		        return 0;
+		    }
+			struct udphdr *u = (struct udphdr *) payload;
+			len -= sizeof(struct udphdr);
+			payload += sizeof(struct udphdr);
+
 			sport = ntohs(u->source);
 			dport = ntohs(u->dest);
 			checksum = ntohs(u->check);
@@ -47,7 +71,7 @@ int nfqueue_cb_new(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_d
 	}
 	//pass everything we can and let Go handle it, I'm not a big fan of C
 	uint32_t verdict = go_nfq_callback(id, ntohs(ph->hw_protocol), ph->hook, &mark, ip->version, ip->protocol, 
-								  ip->tos, ip->ttl, saddr, daddr, sport, dport, checksum, payload, data);
+								  ip->tos, ip->ttl, saddr, daddr, sport, dport, checksum, len, payload, data);
 	return nfq_set_verdict2(qh, id, verdict, mark, 0, NULL);
 }
 

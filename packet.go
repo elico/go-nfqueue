@@ -83,8 +83,6 @@ func (v Verdict) String() string {
 		return "DROP"
 	case ACCEPT:
 		return "ACCEPT"
-	case REPEAT:
-		return "REPEAT"
 	}
 	return fmt.Sprintf("<unsupported verdict, %d>", uint8(v))
 }
@@ -110,6 +108,7 @@ type Packet struct {
 	HWProtocol uint16
 	Hook       uint8
 	Mark       uint32
+	Payload    []byte
 	*IPHeader
 	*TCPUDPHeader
 
@@ -132,18 +131,6 @@ func (pkt *Packet) setVerdict(v Verdict) (err error) {
 	return err
 }
 
-func (pkt *Packet) setVerdictMark(v Verdict, m uint32) (err error) {
-	defer func() {
-		if x := recover(); x != nil {
-			err = ErrVerdictSentOrTimedOut
-		}
-	}()
-	pkt.Mark = m
-	pkt.verdict <- uint32(v)
-	close(pkt.verdict)
-	return err
-}
-
 func (pkt *Packet) Accept() error {
 	return pkt.setVerdict(ACCEPT)
 }
@@ -152,11 +139,7 @@ func (pkt *Packet) Drop() error {
 	return pkt.setVerdict(DROP)
 }
 
-func (pkt *Packet) Repeat() error {
- 	return pkt.SetVerdict(REPEAT)
-}
-
-// Was not tested yet
 func (pkt *Packet) RepeatMark(mark uint32) error {
- 	return pkt.SetVerdictMark(REPEAT, mark)
+	pkt.Mark = mark
+	return pkt.setVerdict(REPEAT)
 }
