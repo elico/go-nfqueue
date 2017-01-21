@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 
-	"github.com/OneOfOne/go-nfqueue"
+	"github.com/elico/go-nfqueue"
 )
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU()) //if it's less than 2, the program will never exit, it blocks on recv
 	var (
 		q = nfqueue.NewMultiQueue(0, 5)
 	)
