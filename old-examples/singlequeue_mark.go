@@ -1,13 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/elico/go-nfqueue"
 	"os"
 	"os/signal"
-	"flag"
 	"sync/atomic"
-	"github.com/elico/go-nfqueue"
 )
+
 var marksMax uint64
 var logpkt bool
 var logmark bool
@@ -21,13 +22,13 @@ func print_packets(qid uint16, pkt *nfqueue.Packet) {
 */
 
 func main() {
-        flag.BoolVar(&logpkt, "log-packet", false, "Log the packet to stdout (works with log-mark option only)")
-        flag.BoolVar(&logmark, "log-mark", false, "Log the mark selection to stdout")
+	flag.BoolVar(&logpkt, "log-packet", false, "Log the packet to stdout (works with log-mark option only)")
+	flag.BoolVar(&logmark, "log-mark", false, "Log the mark selection to stdout")
 
-        flag.Uint64Var(&marksMax, "high-mark", uint64(3), "The number of the highest queue number")
-				flag.IntVar(&queueNum, "queue-num", 0, "The NFQUEQUE number")
+	flag.Uint64Var(&marksMax, "high-mark", uint64(3), "The number of the highest queue number")
+	flag.IntVar(&queueNum, "queue-num", 0, "The NFQUEQUE number")
 
-        flag.Parse()
+	flag.Parse()
 	var (
 		q = nfqueue.NewNFQueue(uint16(queueNum))
 	)
